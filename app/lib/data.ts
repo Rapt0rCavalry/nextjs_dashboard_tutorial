@@ -6,6 +6,8 @@ import {
   InvoicesTable,
   LatestInvoiceRaw,
   Revenue,
+  CustomerSpend,
+  CustomerSpendRaw
 } from './definitions';
 import { formatCurrency } from './utils';
 
@@ -16,12 +18,12 @@ export async function fetchRevenue() {
     // Artificially delay a response for demo purposes.
     // Don't do this in production :)
 
-    // console.log('Fetching revenue data...');
-    // await new Promise((resolve) => setTimeout(resolve, 3000));
+    console.log('Fetching revenue data...');
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const data = await sql<Revenue[]>`SELECT * FROM revenue`;
 
-    // console.log('Data fetch completed after 3 seconds.');
+    console.log('Data fetch completed after 3 seconds.');
 
     return data;
   } catch (error) {
@@ -32,6 +34,9 @@ export async function fetchRevenue() {
 
 export async function fetchLatestInvoices() {
   try {
+    console.log('Fetching revenue data...');
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
     const data = await sql<LatestInvoiceRaw[]>`
       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
       FROM invoices
@@ -43,6 +48,9 @@ export async function fetchLatestInvoices() {
       ...invoice,
       amount: formatCurrency(invoice.amount),
     }));
+
+    console.log('Data fetch completed after 5 seconds.');
+
     return latestInvoices;
   } catch (error) {
     console.error('Database Error:', error);
@@ -214,5 +222,47 @@ export async function fetchFilteredCustomers(query: string) {
   } catch (err) {
     console.error('Database Error:', err);
     throw new Error('Failed to fetch customer table.');
+  }
+}
+
+export async function fetchCustomerSpend() {
+  try {
+
+    console.log('Fetching revenue data...');
+    await new Promise((resolve) => setTimeout(resolve, 7000));
+    
+    const data = await sql<CustomerSpendRaw[]>`
+      SELECT 
+        id,
+        name,
+        image_url,
+        email,
+        amount
+      FROM 
+        (
+          SELECT DISTINCT
+            customers.name, 
+            customers.image_url, 
+            customers.email, 
+            customers.id,
+            SUM(invoices.amount) OVER(PARTITION BY customers.id) as amount
+          FROM 
+            invoices
+            JOIN customers ON invoices.customer_id = customers.id
+        ) total_spend
+      ORDER BY amount DESC
+      `;
+
+    const customerSpend = data.map((customer) => ({
+      ...customer,
+      amount: formatCurrency(customer.amount),
+    }));
+
+    console.log('Data fetch completed after 7 seconds.');
+
+    return customerSpend;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch the latest invoices.');
   }
 }

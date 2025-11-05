@@ -1,8 +1,17 @@
 import bcrypt from 'bcrypt';
 import postgres from 'postgres';
+import { createClient } from '@supabase/supabase-js';
+// import dotenv from 'dotenv' ;
 import { invoices, customers, revenue, users } from '../lib/placeholder-data';
 
+
+require('dotenv').config();
+
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+// const supabaseUrl = process.env.SUPABASE_URL;
+// const supabaseAnonKey = process.env.SUPABASE_ANON_KEY
+
+// const sql = createClient(supabaseUrl, supabaseAnonKey);
 
 async function seedUsers() {
   await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
